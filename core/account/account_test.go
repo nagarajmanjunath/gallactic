@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"testing"
+	"math/big"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -11,7 +12,7 @@ import (
 
 func TestMarshaling(t *testing.T) {
 	acc1 := NewAccountFromSecret("Secret")
-	acc1.AddToBalance(999999999999999999)
+	acc1.AddToBalance(new(big.Int).SetInt64(999999999999999999))
 	acc1.SetPermissions(0x77)
 	acc1.IncSequence()
 	acc1.SetCode([]byte{60, 23, 45})

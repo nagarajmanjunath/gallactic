@@ -1,6 +1,7 @@
 package tx
 
 import (
+	"math/big"
 	"encoding/json"
 
 	"github.com/gallactic/gallactic/common/binary"
@@ -19,17 +20,20 @@ type callData struct {
 	Data     binary.HexBytes `json:"data,omitempty"`
 }
 
-func NewCallTx(caller, callee crypto.Address, sequence uint64, data []byte, gasLimit, amount, fee uint64) (*CallTx, error) {
+func NewCallTx(caller, callee crypto.Address, sequence uint64,data []byte, gasLimit uint64, amount, fee *big.Int) (*CallTx, error) {
+
+	var sum  *big.Int
+	sum.Add(amount,fee)
 	return &CallTx{
 		data: callData{
 			Caller: TxInput{
 				Address:  caller,
 				Sequence: sequence,
-				Amount:   amount + fee,
+				Amount: sum  ,
 			},
 			Callee: TxOutput{
 				Address: callee,
-				Amount:  amount,
+				Amount:  sum,
 			},
 			GasLimit: gasLimit,
 			Data:     data,
@@ -47,16 +51,20 @@ func (tx *CallTx) Signers() []TxInput {
 	return []TxInput{tx.data.Caller}
 }
 
-func (tx *CallTx) Amount() uint64 {
+func (tx *CallTx) Amount() *big.Int {
 	return tx.data.Callee.Amount
 }
 
-func (tx *CallTx) Fee() uint64 {
-	return tx.data.Caller.Amount - tx.data.Callee.Amount
+func (tx *CallTx) Fee() *big.Int {
+	var fee *big.Int
+	fee =fee.Sub(tx.data.Caller.Amount,tx.data.Callee.Amount)
+	return fee
 }
 
 func (tx *CallTx) EnsureValid() error {
-	if tx.data.Callee.Amount > tx.data.Caller.Amount {
+
+	var result = tx.data.Callee.Amount.Cmp(tx.data.Caller.Amount)
+	 if(result > 0){
 		return e.Error(e.ErrInsufficientFunds)
 	}
 

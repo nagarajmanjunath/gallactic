@@ -1,6 +1,7 @@
 package tx
 
 import (
+	"math/big"
 	"encoding/json"
 
 	"github.com/gallactic/gallactic/crypto"
@@ -19,9 +20,11 @@ func EmptySendTx() (*SendTx, error) {
 	return &SendTx{}, nil
 }
 
-func NewSendTx(from, to crypto.Address, seq, amt, fee uint64) (*SendTx, error) {
+func NewSendTx(from, to crypto.Address, seq uint64, amt, fee *big.Int) (*SendTx, error) {
 	tx := &SendTx{}
-	tx.AddSender(from, seq, amt+fee)
+	var sum *big.Int
+    sum.Add(amt,fee)
+	tx.AddSender(from, seq, sum)
 	tx.AddReceiver(to, amt)
 
 	return tx, nil
@@ -35,15 +38,17 @@ func (tx *SendTx) Signers() []TxInput {
 	return tx.data.Senders
 }
 
-func (tx *SendTx) Amount() uint64 {
+func (tx *SendTx) Amount() *big.Int {
 	return tx.outAmount()
 }
 
-func (tx *SendTx) Fee() uint64 {
-	return tx.inAmount() - tx.outAmount()
+func (tx *SendTx) Fee() *big.Int {
+	var fee *big.Int
+	fee =fee.Sub(tx.inAmount(),tx.outAmount())
+	return fee
 }
 
-func (tx *SendTx) AddSender(addr crypto.Address, seq, amt uint64) {
+func (tx *SendTx) AddSender(addr crypto.Address, seq uint64, amt *big.Int) {
 	tx.data.Senders = append(tx.data.Senders, TxInput{
 		Address:  addr,
 		Amount:   amt,
@@ -51,33 +56,36 @@ func (tx *SendTx) AddSender(addr crypto.Address, seq, amt uint64) {
 	})
 }
 
-func (tx *SendTx) AddReceiver(addr crypto.Address, amt uint64) {
+func (tx *SendTx) AddReceiver(addr crypto.Address, amt *big.Int) {
 	tx.data.Receivers = append(tx.data.Receivers, TxOutput{
 		Address: addr,
 		Amount:  amt,
 	})
 }
 
-func (tx *SendTx) inAmount() uint64 {
-	inAmt := uint64(0)
+func (tx *SendTx) inAmount() *big.Int {
+	inAmt := big.NewInt(0)
 	for _, in := range tx.data.Senders {
-		inAmt += in.Amount
+
+		inAmt.Add(in.Amount,inAmt)
 	}
 	return inAmt
 }
 
-func (tx *SendTx) outAmount() uint64 {
-	outAmt := uint64(0)
+func (tx *SendTx) outAmount() *big.Int {
+	outAmt := big.NewInt(0)
 	for _, out := range tx.data.Receivers {
-		outAmt += out.Amount
+		outAmt.Add(out.Amount,outAmt)
 	}
 	return outAmt
 }
 
 func (tx *SendTx) EnsureValid() error {
-	if tx.outAmount() > tx.inAmount() {
-		return e.Error(e.ErrInsufficientFunds)
-	}
+
+	var result = tx.outAmount().Cmp(tx.inAmount())
+	if(result > 0){
+	   return e.Error(e.ErrInsufficientFunds)
+   }
 
 	for _, in := range tx.data.Senders {
 		if err := in.ensureValid(); err != nil {

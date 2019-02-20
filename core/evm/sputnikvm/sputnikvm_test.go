@@ -1,6 +1,7 @@
 package sputnikvm
 
 import (
+	"math/big"
 	"encoding/hex"
 	"testing"
 	"time"
@@ -38,7 +39,9 @@ func TestSputnikVM(t *testing.T) {
 
 	callerAddr := toGallacticAddress("6ac7ea33f8831ea9dcc53393aaa88b25a785dbf0")
 	caller, _ := account.NewAccount(callerAddr)
-	caller.AddToBalance(1000000)
+	amt := new(big.Int)
+	amt.SetString("1000000000000000000", 10)
+	caller.AddToBalance(amt)
 	caller.SetCode([]byte{})
 
 	st := state.NewState(db, logging.NewNoopLogger())
@@ -46,22 +49,24 @@ func TestSputnikVM(t *testing.T) {
 	cache.UpdateAccount(caller)
 
 	// Empty contract
+	amt1 := new(big.Int)
+	amt1.SetString("0",0)
 	adapter1 := GallacticAdapter{BlockChain: bc, Cache: cache, Caller: caller,
-		Callee: nil, GasLimit: 1000000, Amount: 0, Data: []byte{}, Nonce: 1}
-	outE := Execute(&adapter1)
+		Callee: nil, GasLimit: 1000000, Amount: amt1, Data: []byte{}, Nonce: 1}
+	outE := Execute(adapter1)
 	require.Equal(t, outE.Failed, false) /// deploying an empty contract is possible
 
 	//Deploy a random contract.
 	adapter2 := GallacticAdapter{BlockChain: bc, Cache: cache, Caller: caller,
-		Callee: nil, GasLimit: 1000000, Amount: 0, Data: []byte{60, 80, 120, 48, 22, 8, 0, 0, 34}, Nonce: 2}
-	outR := Execute(&adapter2)
+		Callee: nil, GasLimit: 1000000, Amount: amt1, Data: []byte{60, 80, 120, 48, 22, 8, 0, 0, 34}, Nonce: 2}
+	outR := Execute(adapter2)
 	require.Equal(t, outR.Failed, true) /// invalid data
 
 	//Deploy a valid contract
 	testCode := createContractCode()
 	adapter3 := GallacticAdapter{BlockChain: bc, Cache: cache, Caller: caller,
-		Callee: nil, GasLimit: 1000000, Amount: 0, Data: testCode, Nonce: 3}
-	outD := Execute(&adapter3)
+		Callee: nil, GasLimit: 1000000, Amount: amt1, Data: testCode, Nonce: 3}
+	outD := Execute(adapter3)
 	require.Equal(t, outD.Failed, false)
 	require.NotNil(t, *outD.ContractAddress)
 	contractCodeAfterDeploy := testCode[71:] // first 64 bytes is for hashing, ...
@@ -72,40 +77,40 @@ func TestSputnikVM(t *testing.T) {
 	//Call none exist method
 	noneMethod, _ := hex.DecodeString("c0ae47d2")
 	adapter4 := GallacticAdapter{BlockChain: bc, Cache: cache, Caller: caller,
-		Callee: contract, GasLimit: 1000000, Amount: 0, Data: noneMethod, Nonce: 4}
-	outN := Execute(&adapter4)
+		Callee: contract, GasLimit: 1000000, Amount: amt1, Data: noneMethod, Nonce: 4}
+	outN := Execute(adapter4)
 	require.Equal(t, outN.Failed, true)
 	require.Equal(t, 0, len(outN.Output))
 
 	//Call SetMethod() by 1234567 as parameter
 	setMethod, _ := hex.DecodeString("60fe47b100000000000000000000000000000000000000000000000000000000000001c8")
 	adapter5 := GallacticAdapter{BlockChain: bc, Cache: cache, Caller: caller,
-		Callee: contract, GasLimit: 1000000, Amount: 0, Data: setMethod, Nonce: 5}
-	outS := Execute(&adapter5)
+		Callee: contract, GasLimit: 1000000, Amount: amt, Data: setMethod, Nonce: 5}
+	outS := Execute(adapter5)
 	require.Equal(t, outS.Failed, false)
 	require.Equal(t, 0, len(outS.Output))
 
 	//Call Get() Method...
 	getMethod, _ := hex.DecodeString("6d4ce63c")
 	adapter6 := GallacticAdapter{BlockChain: bc, Cache: cache, Caller: caller,
-		Callee: contract, GasLimit: 1000000, Amount: 0, Data: getMethod, Nonce: 6}
-	outG := Execute(&adapter6)
+		Callee: contract, GasLimit: 1000000, Amount: amt1, Data: getMethod, Nonce: 6}
+	outG := Execute(adapter6)
 	require.Equal(t, outG.Failed, false)
 	require.Equal(t, "00000000000000000000000000000000000000000000000000000000000001c8", hex.EncodeToString(outG.Output))
 
 	//Call GetOwner() Method...
 	getOwnerMethod, _ := hex.DecodeString("893d20e8")
 	adapter7 := GallacticAdapter{BlockChain: bc, Cache: cache, Caller: caller,
-		Callee: contract, GasLimit: 1000000, Amount: 0, Data: getOwnerMethod, Nonce: 7}
-	outW := Execute(&adapter7)
+		Callee: contract, GasLimit: 1000000, Amount: amt1, Data: getOwnerMethod, Nonce: 7}
+	outW := Execute(adapter7)
 	require.Equal(t, outW.Failed, false)
 	require.Equal(t, toEthAddress(caller.Address()).Bytes(), outW.Output[12:])
 
 	//Call kill() Method...
 	killMethod, _ := hex.DecodeString("41c0e1b5")
 	adapter8 := GallacticAdapter{BlockChain: bc, Cache: cache, Caller: caller,
-		Callee: contract, GasLimit: 1000000, Amount: 0, Data: killMethod, Nonce: 7}
-	outK := Execute(&adapter8)
+		Callee: contract, GasLimit: 1000000, Amount: amt1, Data: killMethod, Nonce: 7}
+	outK := Execute(adapter8)
 	require.Equal(t, outK.Failed, false)
 
 }

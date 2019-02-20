@@ -1,6 +1,7 @@
 package blockchain
 
 import (
+	"math/big"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -232,6 +233,6 @@ func (bc *Blockchain) EvaluateSortition(blockHeight uint64, blockHash []byte) {
 	go bc.sortition.Evaluate(blockHeight, blockHash)
 }
 
-func (bc *Blockchain) VerifySortition(blockHash []byte, publicKey crypto.PublicKey, info uint64, proof []byte) bool {
+func (bc *Blockchain) VerifySortition(blockHash []byte, publicKey crypto.PublicKey, info *big.Int, proof []byte) bool {
 	return bc.sortition.Verify(blockHash, publicKey, info, proof)
 }

@@ -1,6 +1,7 @@
 package state
 
 import (
+	"math/big"
 	"fmt"
 	"sync"
 
@@ -328,7 +329,8 @@ func (st *State) IncentivizeValidator(addr crypto.Address, fee uint64) error {
 	if err != nil {
 		return fmt.Errorf("Could not get proposer information: %v", err)
 	}
-	val.AddToStake(fee)
+	f := new(big.Int).SetUint64(fee)
+	val.AddToStake(f)
 	return st.updateValidator(val)
 }
 

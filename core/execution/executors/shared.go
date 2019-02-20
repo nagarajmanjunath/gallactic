@@ -17,12 +17,13 @@ func getInputAccount(ch *state.Cache, in tx.TxInput, req account.Permissions) (*
 	}
 
 	// Check sequences
-	if acc.Sequence()+1 != uint64(in.Sequence) {
+	if acc.Sequence()+1 != (in.Sequence) {
 		return nil, e.Errorf(e.ErrInvalidSequence, "%v has set sequence to %v. It should be %v", in.Address, in.Sequence, acc.Sequence()+1)
 	}
 
 	// Check amount
-	if acc.Balance() < uint64(in.Amount) {
+	var bal = acc.Balance().Cmp(in.Amount)
+	if bal < 0 {
 		return nil, e.Error(e.ErrInsufficientFunds)
 	}
 
@@ -53,7 +54,8 @@ func getInputValidator(ch *state.Cache, in tx.TxInput) (*validator.Validator, er
 	}
 
 	// Check amount
-	if val.Stake() < uint64(in.Amount) {
+	stakeresult := val.Stake().Cmp(in.Amount)
+	if stakeresult < 0 {
 		return nil, e.Error(e.ErrInsufficientFunds)
 	}
 

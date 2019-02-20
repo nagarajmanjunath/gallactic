@@ -312,11 +312,12 @@ func (s *blockchainService) GetTx(ctx context.Context, req *pb.TxRequest) (*pb.T
 
 //Get validator
 func (vs *blockchainService) toValidator(val *validator.Validator) *pb.ValidatorInfo {
+
 	return &pb.ValidatorInfo{
 		Address: val.Address().String(),
 		PubKey:  val.PublicKey().String(),
 		Power:   val.Power(),
-		Stake:   val.Stake(),
+		Stake:   val.Stake().Uint64(),
 	}
 }
 

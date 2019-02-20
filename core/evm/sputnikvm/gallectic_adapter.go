@@ -22,7 +22,7 @@ type GallacticAdapter struct {
 	Caller     *account.Account
 	Callee     *account.Account
 	GasLimit   uint64
-	Amount     uint64
+	Amount     *big.Int
 	Data       []byte
 	Nonce      uint64
 }
@@ -52,7 +52,7 @@ func (ga *GallacticAdapter) GetGasPrice() *big.Int {
 }
 
 func (ga *GallacticAdapter) GetAmount() *big.Int {
-	return bigint(ga.Amount)
+	return ga.Amount
 }
 
 func (ga *GallacticAdapter) GetData() []byte {
@@ -110,19 +110,19 @@ func (ga *GallacticAdapter) removeAccount(address common.Address) {
 	ga.Cache.RemoveAccount(addr)
 }
 
-func (ga *GallacticAdapter) addBalance(address common.Address, amount uint64) {
+func (ga *GallacticAdapter) addBalance(address common.Address, amount *big.Int) {
 	acc := ga.getAccount(address)
 	acc.AddToBalance(amount)
 	ga.Cache.UpdateAccount(acc)
 }
 
-func (ga *GallacticAdapter) subBalance(address common.Address, amount uint64) {
+func (ga *GallacticAdapter) subBalance(address common.Address, amount *big.Int) {
 	acc := ga.getAccount(address)
 	acc.SubtractFromBalance(amount)
 	ga.Cache.UpdateAccount(acc)
 }
 
-func (ga *GallacticAdapter) setBalance(address common.Address, amount uint64) {
+func (ga *GallacticAdapter) setBalance(address common.Address, amount *big.Int) {
 	acc := ga.getAccount(address)
 	acc.SetBalance(amount)
 	ga.Cache.UpdateAccount(acc)

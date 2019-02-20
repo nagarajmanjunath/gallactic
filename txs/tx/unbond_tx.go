@@ -1,6 +1,7 @@
 package tx
 
 import (
+	"math/big"
 	"encoding/json"
 
 	"github.com/gallactic/gallactic/crypto"
@@ -16,13 +17,16 @@ type unbondData struct {
 	To   TxOutput `json:"to"`
 }
 
-func NewUnbondTx(from, to crypto.Address, amount, sequence, fee uint64) (*UnbondTx, error) {
+func NewUnbondTx(from, to crypto.Address, amount *big.Int, sequence uint64, fee *big.Int) (*UnbondTx, error) {
+
+	var sum  *big.Int
+	sum.Add(amount,fee)
 	return &UnbondTx{
 		data: unbondData{
 			From: TxInput{
 				Address:  from,
 				Sequence: sequence,
-				Amount:   amount + fee,
+				Amount:   sum,
 			},
 			To: TxOutput{
 				Address: to,
@@ -40,18 +44,23 @@ func (tx *UnbondTx) Signers() []TxInput {
 	return []TxInput{tx.data.From}
 }
 
-func (tx *UnbondTx) Amount() uint64 {
+func (tx *UnbondTx) Amount() *big.Int {
 	return tx.data.To.Amount
 }
 
-func (tx *UnbondTx) Fee() uint64 {
-	return tx.data.From.Amount - tx.data.To.Amount
+func (tx *UnbondTx) Fee() *big.Int {
+	var fee *big.Int
+	fee =fee.Sub(tx.data.From.Amount,tx.data.To.Amount)
+	return fee
+
 }
 
 func (tx *UnbondTx) EnsureValid() error {
-	if tx.data.To.Amount > tx.data.From.Amount {
-		return e.Error(e.ErrInsufficientFunds)
-	}
+
+	var result = tx.data.To.Amount.Cmp(tx.data.From.Amount)
+	if(result > 0){
+	   return e.Error(e.ErrInsufficientFunds)
+   }
 
 	if err := tx.data.From.ensureValid(); err != nil {
 		return err

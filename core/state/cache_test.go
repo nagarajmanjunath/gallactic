@@ -1,6 +1,7 @@
 package state
 
 import (
+	"math/big"
 	"testing"
 
 	"github.com/gallactic/gallactic/common/binary"
@@ -25,7 +26,7 @@ func TestAccountChange(t *testing.T) {
 
 	// update cache
 	acc1, err := account.NewAccount(addr1)
-	acc1.AddToBalance(10)
+	acc1.AddToBalance((new(big.Int).SetInt64(10)))
 	cache.UpdateAccount(acc1)
 	acc11, err := cache.GetAccount(addr1)
 	assert.NoError(t, err)
@@ -54,7 +55,7 @@ func TestAccountChange(t *testing.T) {
 	acc3, err := account.NewAccount(addr3)
 	st.updateAccount(acc3)
 	cache.SetStorage(addr3, binary.Uint64ToWord256(1), binary.Uint64ToWord256(2))
-	acc3.AddToBalance(10)
+	acc3.AddToBalance((new(big.Int).SetInt64(10)))
 	cache.UpdateAccount(acc3)
 	acc33, err := cache.GetAccount(addr3)
 	assert.NoError(t, err)

@@ -1,6 +1,7 @@
 package rpc
 
 import (
+	"math/big"
 	"encoding/json"
 	"testing"
 
@@ -38,7 +39,8 @@ func TestListUnconfirmedTxs(t *testing.T) {
 	callee, err := crypto.AddressFromString("acTqSGVw94xP1myXrnCm3rBWgzcJ5uEbB1f")
 	require.NoError(t, err)
 
-	callTx, err := tx.NewCallTx(caller, callee, 1, nil, 1, 100, 12)
+
+	callTx, err := tx.NewCallTx(caller, callee, 1, nil, 1,(new(big.Int).SetInt64(100)), (new(big.Int).SetInt64(12)))
 	fmt.Println("CallTx :\n", callTx)
 
 	result := &UnconfirmedTxsOutput{

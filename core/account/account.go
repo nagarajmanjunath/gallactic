@@ -1,6 +1,7 @@
 package account
 
 import (
+	"math/big"
 	"encoding/json"
 	"fmt"
 
@@ -18,7 +19,7 @@ type Account struct {
 type accountData struct {
 	Address     crypto.Address  `json:"address"`
 	Sequence    uint64          `json:"sequence"`
-	Balance     uint64          `json:"balance"`
+	Balance     *big.Int          `json:"balance"`
 	Code        binary.HexBytes `json:"code"`
 	Permissions Permissions     `json:"permissions"`
 }
@@ -36,6 +37,7 @@ func NewAccount(addr crypto.Address) (*Account, error) {
 	return &Account{
 		data: accountData{
 			Address: addr,
+			Balance: new(big.Int),
 		},
 	}, nil
 }
@@ -52,6 +54,7 @@ func NewContractAccount(addr crypto.Address) (*Account, error) {
 	return &Account{
 		data: accountData{
 			Address: addr,
+			Balance: new(big.Int),
 		},
 	}, nil
 }
@@ -73,7 +76,7 @@ func AccountFromBytes(bs []byte) (*Account, error) {
 }
 
 func (acc Account) Address() crypto.Address  { return acc.data.Address }
-func (acc Account) Balance() uint64          { return acc.data.Balance }
+func (acc Account) Balance() *big.Int {return acc.data.Balance}
 func (acc Account) Sequence() uint64         { return acc.data.Sequence }
 func (acc Account) Code() []byte             { return acc.data.Code }
 func (acc Account) Permissions() Permissions { return acc.data.Permissions }
@@ -82,21 +85,23 @@ func (acc Account) HasPermissions(perm Permissions) bool {
 	return acc.data.Permissions.IsSet(perm)
 }
 
-func (acc *Account) SetBalance(bal uint64) error {
+func (acc *Account) SetBalance(bal *big.Int) error {
 	acc.data.Balance = bal
 	return nil
 }
 
-func (acc *Account) SubtractFromBalance(amt uint64) error {
-	if amt > acc.Balance() {
+func (acc *Account) SubtractFromBalance(amt *big.Int) error {
+
+	result := amt.Cmp(acc.Balance())
+	if result > 0 {
 		return e.Errorf(e.ErrInsufficientFunds, "Attempt to subtract %v from the balance of %s", amt, acc.Address())
 	}
-	acc.data.Balance -= amt
+    acc.Balance().Sub(acc.data.Balance,amt)
 	return nil
 }
 
-func (acc *Account) AddToBalance(amt uint64) error {
-	acc.data.Balance += amt
+func (acc *Account) AddToBalance(amt *big.Int) error {
+	acc.Balance().Add(acc.Balance(), amt)
 	return nil
 }
 

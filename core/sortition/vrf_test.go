@@ -1,6 +1,7 @@
 package sortition
 
 import (
+	"math/big"
 	"testing"
 
 	"github.com/gallactic/gallactic/crypto"
@@ -12,16 +13,15 @@ func TestVRF(t *testing.T) {
 		pk, pv := crypto.GenerateKey(nil)
 		signer := crypto.NewValidatorSigner(pv)
 		m := []byte{byte(i)}
-
 		vrf := NewVRF(signer)
-
-		max := uint64(i + 1*1000)
-		vrf.SetMax(max)
+		max :=(i + 1*1000)
+	    m1  := big.NewInt(int64(max))
+		vrf.max = m1
 		index, proof := vrf.Evaluate(m)
 
 		//fmt.Printf("%x\n", index)
-		assert.Equal(t, index <= max, true)
-
+		i := index.Cmp(m1)
+		assert.Equal(t, i <= 0, true)
 		index2, result := vrf.Verify(m, pk, proof)
 
 		assert.Equal(t, result, true)

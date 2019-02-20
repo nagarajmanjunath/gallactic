@@ -1,6 +1,7 @@
 package tx
 
 import (
+	"math/big"
 	"encoding/json"
 	"fmt"
 
@@ -87,8 +88,8 @@ func (typ *Type) UnmarshalText(data []byte) error {
 type Tx interface {
 	Signers() []TxInput
 	Type() Type
-	Amount() uint64
-	Fee() uint64
+	Amount() *big.Int
+	Fee() *big.Int
 	EnsureValid() error
 }
 

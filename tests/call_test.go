@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"math/big"
 	"bytes"
 	"encoding/binary"
 	"encoding/hex"
@@ -16,11 +17,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var defaultGas uint64 = 21000000
+var defaultGas uint64 =(21000000)
 
 func makeCallTx(t *testing.T, from string, addr crypto.Address, data []byte, amt, fee uint64) *tx.CallTx {
 	acc := getAccountByName(t, from)
-	tx, err := tx.NewCallTx(acc.Address(), addr, acc.Sequence()+1, data, defaultGas, amt, fee)
+
+	tx, err := tx.NewCallTx(acc.Address(), addr, acc.Sequence()+1, data, defaultGas, new(big.Int).SetUint64(amt),new(big.Int).SetUint64(fee))
 	assert.NoError(t, err)
 
 	return tx
@@ -348,13 +350,14 @@ func TestContractSend(t *testing.T) {
 	assert.Nil(t, err)
 
 	balSender3 := getBalance(t, "bob")
-	amount2 := uint64(2000)
-	fee2 := uint64(10)
+	amount2 :=new(big.Int).SetUint64(2000)
+	fee2 :=new(big.Int).SetUint64(10)
 	tx3 := makeCallTx(t, "bob", contractAddr, stakeCode, amount2, fee2)
 	_, rec3 := signAndExecute(t, e.ErrNone, tx3, "bob")
 	assert.Equal(t, rec3.Status, txs.Ok)
 	balSender4 := getBalance(t, "bob")
 	balContract2 := getBalanceByAddress(t, contractAddr)
+
 	assert.Equal(t, balSender3-amount2-fee2, balSender4)
 	assert.Equal(t, balContract2, amount2)
 

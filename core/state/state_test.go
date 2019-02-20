@@ -1,6 +1,7 @@
 package state
 
 import (
+	"math/big"
 	"testing"
 
 	"github.com/gallactic/gallactic/core/account"
@@ -25,7 +26,7 @@ func TestStateChanges(t *testing.T) {
 	assert.Equal(t, st.AccountCount(), 0)
 
 	acc1, _ := account.NewAccount(addr)
-	acc1.AddToBalance(10)
+	acc1.AddToBalance((new(big.Int).SetInt64(10)))
 	st.updateAccount(acc1)
 	acc2, err := st.GetAccount(addr)
 	assert.NoError(t, err)

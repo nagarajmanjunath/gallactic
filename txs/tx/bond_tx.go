@@ -1,6 +1,7 @@
 package tx
 
 import (
+	"math/big"
 	"encoding/json"
 
 	"github.com/gallactic/gallactic/crypto"
@@ -17,13 +18,16 @@ type bondData struct {
 	PublicKey crypto.PublicKey `json:"public_key"` // Validator
 }
 
-func NewBondTx(from crypto.Address, to crypto.PublicKey, amount, sequence, fee uint64) (*BondTx, error) {
+
+func NewBondTx(from crypto.Address, to crypto.PublicKey, amount *big.Int, sequence uint64, fee *big.Int) (*BondTx, error) {
+	var sum  *big.Int
+	sum.Add(amount,fee)
 	return &BondTx{
 		data: bondData{
 			From: TxInput{
 				Address:  from,
 				Sequence: sequence,
-				Amount:   amount + fee,
+				Amount:   sum,
 			},
 			To: TxOutput{
 				Address: to.ValidatorAddress(),
@@ -43,18 +47,24 @@ func (tx *BondTx) Signers() []TxInput {
 	return []TxInput{tx.data.From}
 }
 
-func (tx *BondTx) Amount() uint64 {
+func (tx *BondTx) Amount() *big.Int {
 	return tx.data.To.Amount
 }
 
-func (tx *BondTx) Fee() uint64 {
-	return tx.data.From.Amount - tx.data.To.Amount
+func (tx *BondTx) Fee() *big.Int {
+
+	var fee *big.Int
+	fee =fee.Sub(tx.data.From.Amount,tx.data.To.Amount)
+	return fee
 }
 
 func (tx *BondTx) EnsureValid() error {
-	if tx.data.To.Amount > tx.data.From.Amount {
-		return e.Error(e.ErrInsufficientFunds)
-	}
+
+	var result = tx.data.To.Amount.Cmp(tx.data.From.Amount)
+	if(result > 0){
+	   return e.Error(e.ErrInsufficientFunds)
+   }
+
 
 	if err := tx.data.From.ensureValid(); err != nil {
 		return err

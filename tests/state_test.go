@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"math/big"
 	"fmt"
 	"testing"
 
@@ -73,8 +74,8 @@ func TestState_Loading(t *testing.T) {
 	foo := account.NewAccountFromSecret("Foo")
 	bar := account.NewAccountFromSecret("Bar")
 
-	foo.AddToBalance(1)
-	bar.AddToBalance(1)
+	foo.AddToBalance(new(big.Int).SetUint64(1))
+	bar.AddToBalance(new(big.Int).SetUint64(1))
 
 	updateAccount(t, foo)
 	updateAccount(t, bar)
@@ -83,7 +84,7 @@ func TestState_Loading(t *testing.T) {
 	hash2 := saveState(t)
 	require.Equal(t, hash1, hash2)
 
-	foo.AddToBalance(1)
+	foo.AddToBalance(new(big.Int).SetUint64(1))
 	updateAccount(t, foo)
 	hash3 := saveState(t)
 
@@ -91,7 +92,7 @@ func TestState_Loading(t *testing.T) {
 
 	/// --- Immutable saved state
 	state1 := loadState(t, hash1)
-	foo.AddToBalance(1)
+	foo.AddToBalance(new(big.Int).SetUint64(1))
 	_, err := state1.SaveState()
 	require.Error(t, err)
 	/// ---
@@ -110,8 +111,8 @@ func TestState_Loading2(t *testing.T) {
 	foo := account.NewAccountFromSecret("Foo")
 	bar := account.NewAccountFromSecret("Bar")
 
-	foo.AddToBalance(1)
-	bar.AddToBalance(1)
+	foo.AddToBalance(new(big.Int).SetUint64(1))
+	bar.AddToBalance(new(big.Int).SetUint64(1))
 
 	updateAccount(t, foo)
 	hash1 := saveState(t)
@@ -139,7 +140,7 @@ func TestState_Loading2(t *testing.T) {
 func TestState_UpdateAccount(t *testing.T) {
 	foo1 := account.NewAccountFromSecret("Foo")
 
-	foo1.AddToBalance(1)
+	foo1.AddToBalance(new(big.Int).SetUint64(1))
 	foo1.SetCode([]byte{0x60})
 	updateAccount(t, foo1)
 

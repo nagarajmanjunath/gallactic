@@ -1,6 +1,7 @@
 package validator
 
 import (
+	"math/big"
 	"encoding/json"
 	"fmt"
 
@@ -15,17 +16,19 @@ type Validator struct {
 
 type validatorData struct {
 	PublicKey     crypto.PublicKey `json:"publicKey"`
-	Stake         uint64           `json:"stake"`
+	Stake         *big.Int           `json:"stake"`
 	BondingHeight uint64           `json:"bondingHeight"`
 	Sequence      uint64           `json:"sequence"`
 }
 
 func NewValidator(publicKey crypto.PublicKey, bondingHeight uint64) (*Validator, error) {
+
+	st :=big.NewInt(0)
 	val := &Validator{
 		data: validatorData{
 			PublicKey:     publicKey,
 			BondingHeight: bondingHeight,
-			Stake:         0,
+			Stake:         st,
 			Sequence:      0,
 		},
 	}
@@ -33,7 +36,10 @@ func NewValidator(publicKey crypto.PublicKey, bondingHeight uint64) (*Validator,
 }
 
 func (val *Validator) Address() crypto.Address     { return val.data.PublicKey.ValidatorAddress() }
-func (val *Validator) Stake() uint64               { return val.data.Stake }
+func (val *Validator) Stake() *big.Int {
+	bal := new(big.Int)
+	bal = val.data.Stake
+	return bal }
 func (val *Validator) Sequence() uint64            { return val.data.Sequence }
 func (val *Validator) PublicKey() crypto.PublicKey { return val.data.PublicKey }
 func (val *Validator) BondingHeight() uint64       { return val.data.BondingHeight }
@@ -47,17 +53,20 @@ func (val Validator) MinimumStakeToUnbond() uint64 {
 	//TODO:Mostafa
 	return 0
 }
-func (val *Validator) SubtractFromStake(amt uint64) error {
-	if amt > val.Stake() {
+func (val *Validator) SubtractFromStake(amt *big.Int) error {
+
+	result := amt.Cmp(val.Stake())
+	if result > 0 {
 		return e.Errorf(e.ErrInsufficientFunds, "Attempt to subtract %v from the balance of %s", amt, val.Address())
 	}
-	val.data.Stake -= amt
+    val.data.Stake.Sub(val.data.Stake,amt)
 	return nil
 }
 
-func (val *Validator) AddToStake(amt uint64) error {
-	val.data.Stake += amt
+func (val *Validator) AddToStake(amt *big.Int) error {
+	val.data.Stake.Add(val.data.Stake,amt)
 	return nil
+
 }
 
 func (val *Validator) IncSequence() {

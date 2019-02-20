@@ -1,6 +1,7 @@
 package proposal
 
 import (
+	"math/big"
 	"bytes"
 	"crypto/sha256"
 	"encoding/json"
@@ -25,12 +26,12 @@ const shortHashSuffixBytes = 3
 
 type genAccount struct {
 	Address     crypto.Address      `json:"address"`
-	Balance     uint64              `json:"balance"`
+	Balance     *big.Int              `json:"balance"`
 	Permissions account.Permissions `json:"permissions,omitempty"`
 }
 
 type globalAccount struct {
-	Balance     uint64              `json:"balance"`
+	Balance     *big.Int              `json:"balance"`
 	Permissions account.Permissions `json:"permissions"`
 	Code        []byte              `json:"code,omitempty"`
 }
@@ -43,7 +44,7 @@ type genContract struct {
 
 type genValidator struct {
 	Address   crypto.Address   `json:"address"`
-	Stake     uint64           `json:"stake"`
+	Stake     *big.Int          `json:"stake"`
 	PublicKey crypto.PublicKey `json:"publicKey"`
 }
 

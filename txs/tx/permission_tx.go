@@ -1,6 +1,7 @@
 package tx
 
 import (
+	"math/big"
 	"encoding/json"
 	"fmt"
 
@@ -19,7 +20,8 @@ type permissionsData struct {
 	Set         bool                `json:"set"`
 }
 
-func NewPermissionsTx(modifier, modified crypto.Address, perm account.Permissions, set bool, seq, fee uint64) (*PermissionsTx, error) {
+func NewPermissionsTx(modifier, modified crypto.Address, perm account.Permissions, set bool, seq uint64, fee *big.Int) (*PermissionsTx, error) {
+    var amt = big.NewInt(0)
 	return &PermissionsTx{
 		data: permissionsData{
 			Modifier: TxInput{
@@ -29,7 +31,7 @@ func NewPermissionsTx(modifier, modified crypto.Address, perm account.Permission
 			},
 			Modified: TxOutput{
 				Address: modified,
-				Amount:  0,
+				Amount:  amt,
 			},
 
 			Permissions: perm,
@@ -48,19 +50,22 @@ func (tx *PermissionsTx) Signers() []TxInput {
 	return []TxInput{tx.data.Modifier}
 }
 
-func (tx *PermissionsTx) Amount() uint64 {
-	return 0
+func (tx *PermissionsTx) Amount() *big.Int {
+	return big.NewInt(0)
 }
 
-func (tx *PermissionsTx) Fee() uint64 {
+func (tx *PermissionsTx) Fee() *big.Int {
 	return tx.data.Modifier.Amount
 }
 
 func (tx *PermissionsTx) EnsureValid() error {
 	/// Just modifying permission, not transferring money
-	if tx.data.Modified.Amount != 0 {
-		return e.Error(e.ErrInvalidAmount)
-	}
+
+	var amt = big.NewInt(0)
+	var result = tx.data.Modified.Amount.Cmp(amt)
+	if(result == 0){
+	   return e.Error(e.ErrInsufficientFunds)
+   }
 
 	if err := tx.data.Modifier.ensureValid(); err != nil {
 		return err

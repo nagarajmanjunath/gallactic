@@ -93,7 +93,7 @@ func (ctx *CallContext) Deliver(tx *tx.CallTx, caller, callee *account.Account) 
 	adapter := sputnikvm.GallacticAdapter{ctx.BC, ctx.Cache, caller,
 		callee, tx.GasLimit(), tx.Amount(), tx.Data(), caller.Sequence()}
 
-	ret = sputnikvm.Execute(&adapter)
+	ret = sputnikvm.Execute(adapter)
 
 	return ret
 }

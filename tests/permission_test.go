@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"math/big"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -15,7 +16,7 @@ import (
 func makePermissionTx(t *testing.T, modifier, modified string, perm account.Permissions, set bool, fee uint64) *tx.PermissionsTx {
 	acc1 := getAccountByName(t, modifier)
 	acc2 := getAccountByName(t, modified)
-	tx, err := tx.NewPermissionsTx(acc1.Address(), acc2.Address(), perm, set, acc1.Sequence()+1, fee)
+	tx, err := tx.NewPermissionsTx(acc1.Address(), acc2.Address(), perm, set, acc1.Sequence()+1, (new(big.Int).SetUint64(fee)))
 	require.Equal(t, uint64(0), tx.Amount())
 	require.Equal(t, fee, tx.Fee())
 	require.NoError(t, err)

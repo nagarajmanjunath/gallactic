@@ -13,7 +13,7 @@ import (
 	tmRPC "github.com/tendermint/tendermint/rpc/core"
 )
 
-func Execute(adapter Adapter) Output {
+func Execute(adapter GallacticAdapter) Output {
 	fmt.Printf("SputnikVM called.\n")
 
 	var out Output
@@ -53,7 +53,7 @@ Loop:
 			acc := adapter.getAccount(require.Address())
 			if acc != nil {
 				vm.CommitAccount(require.Address(), new(big.Int).SetUint64(acc.Sequence()),
-					new(big.Int).SetUint64(acc.Balance()), acc.Code())
+					(acc.Balance()), acc.Code())
 			} else {
 				vm.CommitNonexist(require.Address())
 			}
@@ -109,12 +109,12 @@ Loop:
 		case sputnikvm.AccountChangeIncreaseBalance:
 			//Increase Balance
 			amount := changedAcc.ChangedAmount()
-			adapter.addBalance(changedAcc.Address(), amount.Uint64())
+			adapter.addBalance(changedAcc.Address(), amount)
 
 		case sputnikvm.AccountChangeDecreaseBalance:
 			//Decrease Balance
 			amount := changedAcc.ChangedAmount()
-			adapter.subBalance(changedAcc.Address(), amount.Uint64())
+			adapter.subBalance(changedAcc.Address(), amount)
 
 		case sputnikvm.AccountChangeRemoved:
 			//Removing Account
@@ -131,7 +131,7 @@ Loop:
 					adapter.updateStorage(changedAcc.Address(), key, value)
 				}
 			}
-			acc.SetBalance(changedAcc.Balance().Uint64())
+			acc.SetBalance(changedAcc.Balance())
 			acc.SetSequence(changedAcc.Nonce().Uint64())
 			// After deploying the contract, code can't be changed
 			// https://github.com/ethereumproject/go-ethereum/issues/696
@@ -144,7 +144,7 @@ Loop:
 			if len(changedAcc.Code()) == 0 {
 				acc = adapter.createAccount(changedAcc.Address())
 
-				acc.SetBalance(changedAcc.Balance().Uint64())
+				acc.SetBalance(changedAcc.Balance())
 				acc.SetSequence(changedAcc.Nonce().Uint64())
 			} else {
 				acc = adapter.createContractAccount(changedAcc.Address())
@@ -157,7 +157,7 @@ Loop:
 						adapter.updateStorage(changedAcc.Address(), key, value)
 					}
 				}
-				acc.SetBalance(changedAcc.Balance().Uint64())
+				acc.SetBalance(changedAcc.Balance())
 				acc.SetSequence(changedAcc.Nonce().Uint64())
 				acc.SetCode(changedAcc.Code())
 

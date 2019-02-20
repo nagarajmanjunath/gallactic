@@ -1,6 +1,7 @@
 package sortition
 
 import (
+	"math/big"
 	"github.com/gallactic/gallactic/core/state"
 	"github.com/gallactic/gallactic/core/validator"
 	"github.com/gallactic/gallactic/crypto"
@@ -17,7 +18,7 @@ type Sortition struct {
 	signer       crypto.Signer
 	vrf          VRF
 	chainID      string
-	sortitionFee uint64
+	sortitionFee *big.Int
 	logger       *logging.Logger
 }
 
@@ -34,10 +35,11 @@ func NewSortition(state *state.State, signer crypto.Signer, chainID string, logg
 // Evaluate return the vrf for self choosing to be a validator
 func (s *Sortition) Evaluate(blockHeight uint64, blockHash []byte) {
 	totalStake, valStake := s.getTotalStake(s.signer.Address())
+
 	s.vrf.SetMax(totalStake)
 	index, proof := s.vrf.Evaluate(blockHash)
-
-	if index < valStake {
+     iresult := index.Cmp(valStake)
+	if iresult < 0 {
 		s.logger.InfoMsg("This validator is chosen to be in set at height %v", blockHeight)
 
 		/// TODO: better way????
@@ -45,7 +47,6 @@ func (s *Sortition) Evaluate(blockHeight uint64, blockHash []byte) {
 		if err != nil {
 			return
 		}
-
 		tx, _ := tx.NewSortitionTx(
 			s.signer.Address(),
 			blockHeight,
@@ -78,37 +79,41 @@ func (s *Sortition) Evaluate(blockHeight uint64, blockHash []byte) {
 	}
 }
 
-func (s *Sortition) Verify(blockHash []byte, pb crypto.PublicKey, index uint64, proof []byte) bool {
+func (s *Sortition) Verify(blockHash []byte, pb crypto.PublicKey, index *big.Int, proof []byte) bool {
 
 	totalStake, valStake := s.getTotalStake(pb.ValidatorAddress())
 
 	// Note: totalStake can be changed by time on verifying
 	// So we calculate the index again
-	s.vrf.SetMax(totalStake)
 
+	s.vrf.SetMax(totalStake)
 	index2, result := s.vrf.Verify(blockHash, pb, proof)
 	if !result {
 		return false
 	}
+	var iresult = index2.Cmp(valStake)
+	if (iresult < 0){
+		return true
+	}else {
+	return false
+   }
 
-	return index2 < valStake
+
+	// return index2 < valStake
 }
 
 func (s *Sortition) Address() crypto.Address {
 	return s.signer.Address()
 }
 
-func (s *Sortition) getTotalStake(addr crypto.Address) (totalStake uint64, validatorStake uint64) {
-	totalStake = 0
-	validatorStake = 0
-
+func (s *Sortition) getTotalStake(addr crypto.Address) (totalStake *big.Int, validatorStake *big.Int) {
+	totalStake = big.NewInt(0)
+	validatorStake = big.NewInt(0)
 	s.state.IterateValidators(func(validator *validator.Validator) (stop bool) {
-		totalStake += validator.Stake()
-
+		totalStake.Add(totalStake,validator.Stake())
 		if addr == validator.Address() {
 			validatorStake = validator.Stake()
 		}
-
 		return false
 	})
 

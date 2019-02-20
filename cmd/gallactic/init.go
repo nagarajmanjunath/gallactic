@@ -1,6 +1,7 @@
 package main
 
 import (
+	"math/big"
 	"fmt"
 	"path/filepath"
 	"time"
@@ -73,7 +74,9 @@ func makeGenesis(workingDir string, chainName string) *proposal.Genesis {
 		k := key.GenAccountKey()
 		key.EncryptKeyFile(k, workingDir+"/keys/"+k.Address().String()+".json", "", "")
 		acc, _ := account.NewAccount(k.Address())
-		acc.AddToBalance(10000000000000000000)
+		newBigInt := new(big.Int)
+		newBigInt.SetString("1000000000000000000", 10)
+		acc.AddToBalance(newBigInt)
 		accs[i] = acc
 	}
 

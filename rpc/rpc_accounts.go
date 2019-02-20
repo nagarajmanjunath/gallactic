@@ -1,6 +1,7 @@
 package rpc
 
 import (
+	"math/big"
 	"bytes"
 	"encoding/hex"
 	"fmt"
@@ -72,7 +73,7 @@ func (acf *AccountCodeFilter) Match(v interface{}) bool {
 type AccountBalanceFilter struct {
 	op    string
 	value uint64
-	match func(uint64, uint64) bool
+	match func(*big.Int, *big.Int) bool
 }
 
 func (abf *AccountBalanceFilter) Configure(fd *FilterData) error {
@@ -84,6 +85,7 @@ func (abf *AccountBalanceFilter) Configure(fd *FilterData) error {
 	if err2 != nil {
 		return err2
 	}
+
 	abf.match = match
 	abf.op = fd.Op
 	abf.value = uint64(val)
@@ -95,5 +97,6 @@ func (abf *AccountBalanceFilter) Match(v interface{}) bool {
 	if !ok {
 		return false
 	}
-	return abf.match(acc.Balance(), abf.value)
+	value := new(big.Int).SetUint64(abf.value)
+	return abf.match(acc.Balance(), value)
 }

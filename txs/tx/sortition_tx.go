@@ -1,6 +1,7 @@
 package tx
 
 import (
+	"math/big"
 	"encoding/json"
 
 	"github.com/gallactic/gallactic/crypto"
@@ -14,11 +15,12 @@ type SortitionTx struct {
 type sortitionData struct {
 	Validator TxInput `json:"validator"`
 	Height    uint64  `json:"height"`
-	Index     uint64  `json:"index"`
+	Index     *big.Int  `json:"index"`
 	Proof     []byte  `json:"proof"`
 }
 
-func NewSortitionTx(validator crypto.Address, height, seq, fee, index uint64, proof []byte) (*SortitionTx, error) {
+func NewSortitionTx(validator crypto.Address, height, seq uint64, fee *big.Int, index *big.Int, proof []byte) (*SortitionTx, error) {
+
 	return &SortitionTx{
 		data: sortitionData{
 			Validator: TxInput{
@@ -36,18 +38,21 @@ func NewSortitionTx(validator crypto.Address, height, seq, fee, index uint64, pr
 func (tx *SortitionTx) Type() Type         { return TypeSortition }
 func (tx *SortitionTx) Validator() TxInput { return tx.data.Validator }
 func (tx *SortitionTx) Height() uint64     { return tx.data.Height }
-func (tx *SortitionTx) Index() uint64      { return tx.data.Index }
+func (tx *SortitionTx) Index() *big.Int     {
+	
+	return tx.data.Index
+}
 func (tx *SortitionTx) Proof() []byte      { return tx.data.Proof }
 
 func (tx *SortitionTx) Signers() []TxInput {
 	return []TxInput{tx.data.Validator}
 }
 
-func (tx *SortitionTx) Amount() uint64 {
-	return 0
+func (tx *SortitionTx) Amount() *big.Int {
+	return big.NewInt(0)
 }
 
-func (tx *SortitionTx) Fee() uint64 {
+func (tx *SortitionTx) Fee() *big.Int {
 	return tx.data.Validator.Amount
 }
 

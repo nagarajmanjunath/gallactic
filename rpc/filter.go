@@ -15,6 +15,7 @@
 package rpc
 
 import (
+	"math/big"
 	"fmt"
 	"math"
 	"strconv"
@@ -89,30 +90,62 @@ func ParseNumberValue(value string) (uint64, error) {
 
 // Some standard filtering functions.
 
-func GetRangeFilter(op, fName string) (func(a, b uint64) bool, error) {
+func GetRangeFilter(op, fName string) (func(a, b *big.Int) bool, error) {
 	if op == "==" {
-		return func(a, b uint64) bool {
+		return func(a, b *big.Int) bool {
 			return a == b
 		}, nil
 	} else if op == "!=" {
-		return func(a, b uint64) bool {
+		return func(a, b *big.Int) bool {
 			return a != b
 		}, nil
 	} else if op == "<=" {
-		return func(a, b uint64) bool {
-			return a <= b
+		return func(a, b *big.Int) bool {
+			 r := a.Cmp(b)
+			 var d = true
+			 if (r <= 0 ){
+				return d
+			 }else{
+				 d = false
+				return d
+			 }
+
+
+
 		}, nil
 	} else if op == ">=" {
-		return func(a, b uint64) bool {
-			return a >= b
+		return func(a, b *big.Int) bool {
+			r := a.Cmp(b)
+			var d = true
+			if (r >= 0 ){
+			   return d
+			}else{
+				d = false
+			   return d
+			}
 		}, nil
 	} else if op == "<" {
-		return func(a, b uint64) bool {
-			return a < b
+		return func(a, b *big.Int) bool {
+
+			r := a.Cmp(b)
+			var d = true
+			if (r < 0 ){
+			   return d
+			}else{
+				d = false
+			   return d
+			}
 		}, nil
 	} else if op == ">" {
-		return func(a, b uint64) bool {
-			return a > b
+		return func(a, b *big.Int) bool {
+			r := a.Cmp(b)
+			var d = true
+			if (r > 0 ){
+			   return d
+			}else{
+				d = false
+			   return d
+			}
 		}, nil
 	} else {
 		return nil, fmt.Errorf("Op: " + op + " is not supported for '" + fName + "' filtering")

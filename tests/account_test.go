@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"math/big"
 	"fmt"
 	"math/rand"
 	"testing"
@@ -25,7 +26,8 @@ func setupAccountPool(m *testing.M) {
 		pb, pv := crypto.GenerateKeyFromSecret(name)
 		acc, _ := account.NewAccount(pb.AccountAddress())
 		signer := crypto.NewAccountSigner(pv)
-		acc.AddToBalance(bal)
+		b:= new(big.Int).SetUint64(bal)
+		acc.AddToBalance(b)
 
 		tAccounts[name] = acc
 		tSigners[name] = signer
@@ -37,7 +39,8 @@ func setupAccountPool(m *testing.M) {
 		pb, pv := crypto.GenerateKeyFromSecret(name)
 		val, _ := validator.NewValidator(pb, 0)
 		signer := crypto.NewValidatorSigner(pv)
-		val.AddToStake(stake)
+		s:= new(big.Int).SetUint64(stake)
+		val.AddToStake(s)
 
 		tValidators[name] = val
 		tSigners[name] = signer
@@ -53,7 +56,8 @@ func makeAccount(t *testing.T, bal uint64, perm account.Permissions) (*account.A
 	acc, err := account.NewAccount(newAccountAddress(t))
 	require.NoError(t, err)
 	acc.SetPermissions(perm)
-	acc.AddToBalance(bal)
+	b:= new(big.Int).SetUint64(bal)
+	acc.AddToBalance(b)
 	updateAccount(t, acc)
 	commit(t)
 
@@ -67,7 +71,8 @@ func makeContractAccount(t *testing.T, code []byte, bal uint64, perm account.Per
 	require.NoError(t, err)
 	acc.SetCode(code)
 	acc.SetPermissions(perm)
-	acc.AddToBalance(bal)
+	b:= new(big.Int).SetUint64(bal)
+	acc.AddToBalance(b)
 	updateAccount(t, acc)
 	updateAccount(t, deriveFrom)
 	commit(t)

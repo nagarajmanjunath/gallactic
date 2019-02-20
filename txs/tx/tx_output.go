@@ -1,12 +1,13 @@
 package tx
 
 import (
+	"math/big"
 	"github.com/gallactic/gallactic/crypto"
 )
 
 type TxOutput struct {
 	Address crypto.Address `json:"address"`
-	Amount  uint64         `json:"amount"`
+	Amount  *big.Int         `json:"amount"`
 }
 
 func (out *TxOutput) ensureValid() error {
