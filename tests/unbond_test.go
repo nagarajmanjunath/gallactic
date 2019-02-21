@@ -1,13 +1,14 @@
 package tests
 
 import (
+
 	"math/big"
 	"testing"
 
 	"github.com/gallactic/gallactic/core/account/permission"
 	e "github.com/gallactic/gallactic/errors"
 	"github.com/gallactic/gallactic/txs/tx"
-	//"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -30,7 +31,10 @@ func TestUnbondTx(t *testing.T) {
 	tx1 := makeUnbondTx(t, "val_1", "bob", 9999, _fee)
 	signAndExecute(t, e.ErrNone, tx1, "val_1")
 	stake2 := getValidatorByName(t, "val_1").Stake()
-	//assert.Equal(t, stake2, stake1-(9999+_fee))
+	st := new(big.Int).SetUint64(0)
+	st.Add(new(big.Int).SetUint64(_fee),new(big.Int).SetUint64(999))
+	stake1.Sub(stake1,st)
+    assert.Equal(t, stake2, stake1)
 }
 
 func TestUnbondTxSequence(t *testing.T) {

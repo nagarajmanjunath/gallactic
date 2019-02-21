@@ -19,10 +19,10 @@ import (
 
 var defaultGas uint64 =(21000000)
 
-func makeCallTx(t *testing.T, from string, addr crypto.Address, data []byte, amt, fee uint64) *tx.CallTx {
+func makeCallTx(t *testing.T, from string, addr crypto.Address, data []byte, amt *big.Int, fee *big.Int) *tx.CallTx {
 	acc := getAccountByName(t, from)
 
-	tx, err := tx.NewCallTx(acc.Address(), addr, acc.Sequence()+1, data, defaultGas, new(big.Int).SetUint64(amt),new(big.Int).SetUint64(fee))
+	tx, err := tx.NewCallTx(acc.Address(), addr, acc.Sequence()+1, data, defaultGas,amt,fee)
 	assert.NoError(t, err)
 
 	return tx
@@ -39,30 +39,30 @@ func TestCallFails(t *testing.T) {
 	_, simpleContractAddr := makeContractAccount(t, []byte{0x60}, 0, 0)
 
 	// simple call tx should fail
-	tx1 := makeCallTx(t, "alice", simpleContractAddr, nil, 100, _fee)
+	tx1 := makeCallTx(t, "alice", simpleContractAddr, nil,new(big.Int).SetUint64(100),new(big.Int).SetUint64(_fee))
 	signAndExecute(t, e.ErrPermissionDenied, tx1, "alice")
 
 	// simple call tx with send permission should fail
-	tx2 := makeCallTx(t, "bob", simpleContractAddr, nil, 100, _fee)
+	tx2 := makeCallTx(t, "bob", simpleContractAddr, nil, new(big.Int).SetUint64(100),new(big.Int).SetUint64(_fee))
 	signAndExecute(t, e.ErrPermissionDenied, tx2, "bob")
 
 	// simple call tx with create permission should fail
-	tx3 := makeCallTx(t, "dan", simpleContractAddr, nil, 100, _fee)
+	tx3 := makeCallTx(t, "dan", simpleContractAddr, nil, new(big.Int).SetUint64(100),new(big.Int).SetUint64(_fee))
 	signAndExecute(t, e.ErrPermissionDenied, tx3, "dan")
 
 	//-------------------
 	// create txs
 
 	// simple call create tx should fail
-	tx4 := makeCallTx(t, "alice", crypto.Address{}, nil, 100, _fee)
+	tx4 := makeCallTx(t, "alice", crypto.Address{}, nil, new(big.Int).SetUint64(100),new(big.Int).SetUint64(_fee))
 	signAndExecute(t, e.ErrPermissionDenied, tx4, "alice")
 
 	// simple call create tx with send perm should fail
-	tx5 := makeCallTx(t, "bob", crypto.Address{}, nil, 100, _fee)
+	tx5 := makeCallTx(t, "bob", crypto.Address{}, nil, new(big.Int).SetUint64(100),new(big.Int).SetUint64(_fee))
 	signAndExecute(t, e.ErrPermissionDenied, tx5, "bob")
 
 	// simple call create tx with call perm should fail
-	tx6 := makeCallTx(t, "carol", crypto.Address{}, nil, 100, _fee)
+	tx6 := makeCallTx(t, "carol", crypto.Address{}, nil, new(big.Int).SetUint64(100),new(big.Int).SetUint64(_fee))
 	signAndExecute(t, e.ErrPermissionDenied, tx6, "carol")
 }
 
@@ -106,19 +106,19 @@ func TestCreateContractNew(t *testing.T) {
 	testerAddrFunc, _ := hex.DecodeString("4881cca7")
 
 	// Should fail: Alice has no permission to create or call a contract
-	tx1 := makeCallTx(t, "alice", crypto.Address{}, adderBytes, 0, _fee)
+	tx1 := makeCallTx(t, "alice", crypto.Address{}, adderBytes, new(big.Int).SetUint64(0),new(big.Int).SetUint64(_fee))
 	signAndExecute(t, e.ErrPermissionDenied, tx1, "alice")
 
 	// Should fail: Bob has call permission but create contract
-	tx2 := makeCallTx(t, "bob", crypto.Address{}, adderBytes, 0, _fee)
+	tx2 := makeCallTx(t, "bob", crypto.Address{}, adderBytes, new(big.Int).SetUint64(0),new(big.Int).SetUint64(_fee))
 	signAndExecute(t, e.ErrPermissionDenied, tx2, "bob")
 
 	// Should fail: Carol has create contract permission but not call
-	tx3 := makeCallTx(t, "carol", crypto.Address{}, adderBytes, 0, _fee)
+	tx3 := makeCallTx(t, "carol", crypto.Address{}, adderBytes, new(big.Int).SetUint64(0),new(big.Int).SetUint64(_fee))
 	signAndExecute(t, e.ErrPermissionDenied, tx3, "carol")
 
 	// Adder: Should pass: vbuterin has permission to call and create a contract
-	tx4 := makeCallTx(t, "vbuterin", crypto.Address{}, adderBytes, 0, _fee)
+	tx4 := makeCallTx(t, "vbuterin", crypto.Address{}, adderBytes, new(big.Int).SetUint64(0),new(big.Int).SetUint64(_fee))
 	_, rec4 := signAndExecute(t, e.ErrNone, tx4, "vbuterin")
 	require.Equal(t, rec4.Status, txs.Ok)
 	require.Equal(t, rec4.GasWanted, defaultGas)
@@ -127,13 +127,13 @@ func TestCreateContractNew(t *testing.T) {
 	// Should pass: result is 5
 	adderAddData1 := addParams_2(adderAddFunc, 1, 4)
 	returnValue1, _ := hex.DecodeString("0000000000000000000000000000000000000000000000000000000000000005")
-	tx44 := makeCallTx(t, "vbuterin", *rec4.ContractAddress, adderAddData1, 0, _fee)
+	tx44 := makeCallTx(t, "vbuterin", *rec4.ContractAddress, adderAddData1, new(big.Int).SetUint64(0),new(big.Int).SetUint64(_fee))
 	_, rec44 := signAndExecute(t, e.ErrNone, tx44, "vbuterin")
 	assert.Equal(t, rec44.Status, txs.Ok)
 	assert.Equal(t, rec44.Output.Bytes(), returnValue1)
 
 	// Tester: Should pass: vbuterin has permission to call and create a contract
-	tx5 := makeCallTx(t, "vbuterin", crypto.Address{}, testerBytes, 0, _fee)
+	tx5 := makeCallTx(t, "vbuterin", crypto.Address{}, testerBytes, new(big.Int).SetUint64(0),new(big.Int).SetUint64(_fee))
 	_, rec5 := signAndExecute(t, e.ErrNone, tx5, "vbuterin")
 	require.Equal(t, rec5.Status, txs.Ok)
 	fmt.Printf("Tester address: %s\n", rec5.ContractAddress) // -> Tester address
@@ -141,7 +141,7 @@ func TestCreateContractNew(t *testing.T) {
 	// should fail: wrong function hash
 	adderAddFuncWrong, _ := hex.DecodeString("9dd2d1b6") // actual is 9dd2d1b5
 	adderAddDataWrong := addParams_2(adderAddFuncWrong, 1, 4)
-	tx6 := makeCallTx(t, "vbuterin", *rec5.ContractAddress, adderAddDataWrong, 0, _fee)
+	tx6 := makeCallTx(t, "vbuterin", *rec5.ContractAddress, adderAddDataWrong,new(big.Int).SetUint64(0),new(big.Int).SetUint64(_fee))
 	_, rec6 := signAndExecute(t, e.ErrNone, tx6, "vbuterin")
 	assert.Equal(t, rec6.Status, txs.Failed)
 	assert.Empty(t, rec6.Output)
@@ -149,20 +149,20 @@ func TestCreateContractNew(t *testing.T) {
 	// Should pass: call tester_add function, result is 5
 	testerAddData2 := addParams_2(testerAddFunc, 1, 4)
 	returnValue2, _ := hex.DecodeString("0000000000000000000000000000000000000000000000000000000000000005")
-	tx7 := makeCallTx(t, "vbuterin", *rec5.ContractAddress, testerAddData2, 0, _fee)
+	tx7 := makeCallTx(t, "vbuterin", *rec5.ContractAddress, testerAddData2, new(big.Int).SetUint64(0),new(big.Int).SetUint64(_fee))
 	_, rec7 := signAndExecute(t, e.ErrNone, tx7, "vbuterin")
 	assert.Equal(t, rec7.Status, txs.Ok)
 	assert.Equal(t, rec7.Output.Bytes(), returnValue2)
 
 	// Should pass: get the address of deployed adder contract
-	tx8 := makeCallTx(t, "vbuterin", *rec5.ContractAddress, testerAddrFunc, 0, _fee)
+	tx8 := makeCallTx(t, "vbuterin", *rec5.ContractAddress, testerAddrFunc, new(big.Int).SetUint64(0),new(big.Int).SetUint64(_fee))
 	_, rec8 := signAndExecute(t, e.ErrNone, tx8, "vbuterin")
 	assert.Equal(t, rec8.Status, txs.Ok)
 
 	// Should pass: call adder_add function, result is 5
 	addr, err := crypto.ContractAddress(rec8.Output[12:])
 	require.NoError(t, err)
-	tx9 := makeCallTx(t, "vbuterin", addr, adderAddData1, 0, _fee)
+	tx9 := makeCallTx(t, "vbuterin", addr, adderAddData1, new(big.Int).SetUint64(0),new(big.Int).SetUint64(_fee))
 	_, rec9 := signAndExecute(t, e.ErrNone, tx9, "vbuterin")
 	assert.Equal(t, rec9.Status, txs.Ok)
 	assert.Equal(t, rec9.Output.Bytes(), returnValue1)
@@ -216,21 +216,21 @@ func TestCreateContract(t *testing.T) {
 	testerAddrFunc, _ := hex.DecodeString("4881cca7")
 
 	// Should fail: Alice has no permission to create or call a contract
-	tx1 := makeCallTx(t, "alice", crypto.Address{}, factoryBytes, 0, _fee)
+	tx1 := makeCallTx(t, "alice", crypto.Address{}, factoryBytes, new(big.Int).SetUint64(0),new(big.Int).SetUint64(_fee))
 	signAndExecute(t, e.ErrPermissionDenied, tx1, "alice")
 
 	// Should fail: Bob has call permission but create contract
-	tx2 := makeCallTx(t, "bob", crypto.Address{}, factoryBytes, 0, _fee)
+	tx2 := makeCallTx(t, "bob", crypto.Address{}, factoryBytes,new(big.Int).SetUint64(0),new(big.Int).SetUint64(_fee))
 	signAndExecute(t, e.ErrPermissionDenied, tx2, "bob")
 
 	// Should fail: Carol has create contract permission but not call
-	tx3 := makeCallTx(t, "carol", crypto.Address{}, factoryBytes, 0, _fee)
+	tx3 := makeCallTx(t, "carol", crypto.Address{}, factoryBytes, new(big.Int).SetUint64(0),new(big.Int).SetUint64(_fee))
 	signAndExecute(t, e.ErrPermissionDenied, tx3, "carol")
 
 	seq1 := getAccountByName(t, "vbuterin").Sequence()
 
 	// Factory: Should pass: Vitalik has permission to create and call a contract
-	tx4 := makeCallTx(t, "vbuterin", crypto.Address{}, factoryBytes, 0, _fee)
+	tx4 := makeCallTx(t, "vbuterin", crypto.Address{}, factoryBytes, new(big.Int).SetUint64(0),new(big.Int).SetUint64(_fee))
 	_, rec4 := signAndExecute(t, e.ErrNone, tx4, "vbuterin")
 	assert.Equal(t, rec4.Status, txs.Ok)
 	factoryAddr := *rec4.ContractAddress
@@ -243,19 +243,19 @@ func TestCreateContract(t *testing.T) {
 	*/
 
 	// Should fail: Tester has constructor
-	tx6 := makeCallTx(t, "vbuterin", crypto.Address{}, testerBytes, 0, _fee)
+	tx6 := makeCallTx(t, "vbuterin", crypto.Address{}, testerBytes, new(big.Int).SetUint64(0),new(big.Int).SetUint64(_fee))
 	_, rec6 := signAndExecute(t, e.ErrNone, tx6, "vbuterin")
 	assert.Equal(t, rec6.Status, txs.Failed)
 
 	// Tester: Should pass: Tester has constructor with proper vales
 	testerBytes = addParams_1(testerBytes, factoryAddr, adderBytes)
 
-	tx7 := makeCallTx(t, "vbuterin", crypto.Address{}, testerBytes, 0, _fee)
+	tx7 := makeCallTx(t, "vbuterin", crypto.Address{}, testerBytes,new(big.Int).SetUint64(0),new(big.Int).SetUint64(_fee))
 	_, rec7 := signAndExecute(t, e.ErrNone, tx7, "vbuterin")
 	assert.Equal(t, rec7.Status, txs.Ok)
 
 	// should pass: get adder address
-	tx8 := makeCallTx(t, "vbuterin", *rec7.ContractAddress, testerAddrFunc, 0, _fee)
+	tx8 := makeCallTx(t, "vbuterin", *rec7.ContractAddress, testerAddrFunc,new(big.Int).SetUint64(0),new(big.Int).SetUint64(_fee))
 	_, rec8 := signAndExecute(t, e.ErrNone, tx8, "vbuterin")
 	assert.Equal(t, rec8.Status, txs.Ok)
 	assert.NotEmpty(t, rec8.Output)
@@ -264,7 +264,7 @@ func TestCreateContract(t *testing.T) {
 	// Should pass: add 1+4=5
 	testerAddData1 := addParams_2(testerAddFunc, 1, 4)
 	returnValue1, _ := hex.DecodeString("0000000000000000000000000000000000000000000000000000000000000005")
-	tx9 := makeCallTx(t, "vbuterin", *rec7.ContractAddress, testerAddData1, 0, _fee)
+	tx9 := makeCallTx(t, "vbuterin", *rec7.ContractAddress, testerAddData1, new(big.Int).SetUint64(0),new(big.Int).SetUint64(_fee))
 	_, rec9 := signAndExecute(t, e.ErrNone, tx9, "vbuterin")
 	assert.Equal(t, rec9.Status, txs.Ok)
 	assert.Equal(t, rec9.Output.Bytes(), returnValue1)
@@ -292,12 +292,12 @@ func TestStackOverflow(t *testing.T) {
 	contractA, _ := hex.DecodeString("608060405234801561001057600080fd5b5060a48061001f6000396000f300608060405260043610603e576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff1680624264c3146043575b600080fd5b348015604e57600080fd5b506055606b565b6040518082815260200191505060405180910390f35b60006073606b565b9050905600a165627a7a723058203f79e7e64c0023b9c9a103344607f633e35a89ffb907155178e6549c16016fad0029")
 	overflow, _ := hex.DecodeString("004264c3")
 
-	tx1 := makeCallTx(t, "vbuterin", crypto.Address{}, contractA, 0, _fee)
+	tx1 := makeCallTx(t, "vbuterin", crypto.Address{}, contractA, new(big.Int).SetUint64(0),new(big.Int).SetUint64(_fee))
 	_, rec1 := signAndExecute(t, e.ErrNone, tx1, "vbuterin")
 	require.Equal(t, rec1.Status, txs.Ok)
 	fmt.Println(rec1)
 
-	tx2 := makeCallTx(t, "vbuterin", *rec1.ContractAddress, overflow, 0, _fee)
+	tx2 := makeCallTx(t, "vbuterin", *rec1.ContractAddress, overflow,new(big.Int).SetUint64(0),new(big.Int).SetUint64(_fee))
 	_, rec2 := signAndExecute(t, e.ErrNone, tx2, "vbuterin")
 	require.Equal(t, rec2.Status, txs.Failed)
 	require.NotZero(t, rec2.GasUsed)
@@ -312,7 +312,7 @@ func TestContractSend(t *testing.T) {
 	assert.Nil(t, err)
 
 	seq1 := getAccountByName(t, "alice").Sequence()
-	tx1 := makeCallTx(t, "alice", crypto.Address{}, code, 0, _fee)
+	tx1 := makeCallTx(t, "alice", crypto.Address{}, code, new(big.Int).SetUint64(0),new(big.Int).SetUint64(_fee))
 	_, rec1 := signAndExecute(t, e.ErrNone, tx1, "alice")
 	contractAddr := *rec1.ContractAddress
 	assert.Equal(t, rec1.Status, txs.Ok)
@@ -331,15 +331,18 @@ func TestContractSend(t *testing.T) {
 
 	receiver, _ := crypto.AccountAddress(sendCode[16:])
 	balSender1 := getBalance(t, "bob")
-	amount1 := uint64(1000)
-	fee1 := uint64(10)
+	amount1 := new(big.Int).SetUint64(1000)
+	bal := new(big.Int).SetUint64(0)
+	fee1 := new(big.Int).SetUint64(10)
 	tx2 := makeCallTx(t, "bob", contractAddr, sendCode, amount1, fee1)
 	_, rec2 := signAndExecute(t, e.ErrNone, tx2, "bob")
 	assert.Equal(t, rec2.Status, txs.Ok)
 	balSender2 := getBalance(t, "bob")
 	balReceiver := getBalanceByAddress(t, receiver)
 	balContract := getBalanceByAddress(t, contractAddr)
-	assert.Equal(t, balSender1-amount1-fee1, balSender2)
+	bal = bal.Sub(amount1,fee1)
+    balSender1 = balSender1.Sub(balSender1,bal)
+	assert.Equal(t, balSender1, balSender2)
 	assert.Equal(t, amount1, balReceiver) /// create and update balance at the same time
 	assert.Equal(t, balContract, uint64(0))
 
@@ -352,13 +355,15 @@ func TestContractSend(t *testing.T) {
 	balSender3 := getBalance(t, "bob")
 	amount2 :=new(big.Int).SetUint64(2000)
 	fee2 :=new(big.Int).SetUint64(10)
+	bal1 := new(big.Int).SetUint64(0)
 	tx3 := makeCallTx(t, "bob", contractAddr, stakeCode, amount2, fee2)
 	_, rec3 := signAndExecute(t, e.ErrNone, tx3, "bob")
 	assert.Equal(t, rec3.Status, txs.Ok)
 	balSender4 := getBalance(t, "bob")
 	balContract2 := getBalanceByAddress(t, contractAddr)
-
-	assert.Equal(t, balSender3-amount2-fee2, balSender4)
+	bal1 = bal.Sub(amount2,fee2)
+    balSender3 = balSender3.Sub(balSender3,bal1)
+	assert.Equal(t, balSender3, balSender4)
 	assert.Equal(t, balContract2, amount2)
 
 	/// case 4: alice calls stake2 (amount 20)
@@ -384,11 +389,18 @@ func TestContractSend(t *testing.T) {
 	balSender7 := getBalance(t, "alice")
 	balReceiver2 := getBalanceByAddress(t, receiver1)
 	balContract4 := getBalanceByAddress(t, contractAddr)
+	bal3 := new(big.Int).SetUint64(0)
+	bal3 = bal3.Sub(amount2,fee2)
+	balSender5 = balSender5.Sub(balSender5,bal3)
+	br := new(big.Int).SetUint64(0)
+	br = br.Add(amount2,amount2)
+	balReceiver1 = balReceiver1.Add(balReceiver1,br)
 	assert.Equal(t, balContract4, uint64(0))
-	assert.Equal(t, balSender5-amount2-fee2, balSender7)
-	assert.Equal(t, balReceiver1+amount2+amount2, balReceiver2) // receiver will receive amount from contract and the sender at the same time
+	assert.Equal(t, balSender5, balSender7)
+	assert.Equal(t, balReceiver1, balReceiver2) // receiver will receive amount from contract and the sender at the same time
 
 }
+
 
 func TestTxSequence(t *testing.T) {
 	/*
@@ -401,19 +413,19 @@ func TestTxSequence(t *testing.T) {
 
 	sequence1 := getAccountByName(t, "alice").Sequence()
 	for i := 0; i < 100; i++ {
-		tx1 := makeCallTx(t, "alice", crypto.Address{}, code, 0, _fee)
+		tx1 := makeCallTx(t, "alice", crypto.Address{}, code, new(big.Int).SetUint64(0),new(big.Int).SetUint64(_fee))
 		_, rec1 := signAndExecute(t, e.ErrNone, tx1, "alice")
 		require.Equal(t, rec1.Status, txs.Ok)
 
-		tx2 := makeCallTx(t, "alice", crypto.Address{}, []byte{}, 0, _fee)
+		tx2 := makeCallTx(t, "alice", crypto.Address{}, []byte{},new(big.Int).SetUint64(0),new(big.Int).SetUint64(_fee))
 		_, rec2 := signAndExecute(t, e.ErrNone, tx2, "alice")
 		require.Equal(t, rec2.Status, txs.Ok)
 
-		tx3 := makeCallTx(t, "alice", crypto.Address{}, []byte{0x1}, 0, _fee)
+		tx3 := makeCallTx(t, "alice", crypto.Address{}, []byte{0x1}, new(big.Int).SetUint64(0),new(big.Int).SetUint64(_fee))
 		_, rec3 := signAndExecute(t, e.ErrNone, tx3, "alice")
 		require.Equal(t, rec3.Status, txs.Failed)
 
-		tx4 := makeCallTx(t, "alice", crypto.Address{}, code, getBalance(t, "alice")+1, _fee)
+		tx4 := makeCallTx(t, "alice", crypto.Address{}, code, getBalance(t, "alice"), new(big.Int).SetUint64(_fee))
 		_, rec4 := signAndExecute(t, e.ErrInsufficientFunds, tx4, "alice")
 		require.Equal(t, rec4.Status, txs.Failed)
 	}
@@ -440,7 +452,7 @@ func TestCallContract(t *testing.T) {
 
 	// A single input, having the permission, should succeed
 	seq1 := getAccountByName(t, "alice").Sequence()
-	tx1 := makeCallTx(t, "alice", crypto.Address{}, code, 0, _fee)
+	tx1 := makeCallTx(t, "alice", crypto.Address{}, code,new(big.Int).SetUint64(0),new(big.Int).SetUint64(_fee))
 	_, rec1 := signAndExecute(t, e.ErrNone, tx1, "alice")
 	assert.Equal(t, rec1.Status, txs.Ok)
 
@@ -457,7 +469,7 @@ func TestCallContract(t *testing.T) {
 	}
 
 	// Input is the function hash of `get()`
-	tx2 := makeCallTx(t, "alice", contractAddr, getFunc, 0, _fee)
+	tx2 := makeCallTx(t, "alice", contractAddr, getFunc, new(big.Int).SetUint64(0),new(big.Int).SetUint64(_fee))
 	_, rec2 := signAndExecute(t, e.ErrNone, tx2, "alice")
 	assert.Equal(t, rec2.Status, txs.Ok)
 	addr1, _ := crypto.AccountAddress(rec2.Output[12:])
@@ -492,7 +504,7 @@ func TestStorage(t *testing.T) {
 
 	// A single input, having the permission, should succeed
 	seq1 := getAccountByName(t, "alice").Sequence()
-	tx1 := makeCallTx(t, "alice", crypto.Address{}, code, 0, _fee)
+	tx1 := makeCallTx(t, "alice", crypto.Address{}, code,new(big.Int).SetUint64(0),new(big.Int).SetUint64(_fee))
 
 	_, rec1 := signAndExecute(t, e.ErrNone, tx1, "alice")
 	assert.Equal(t, rec1.Status, txs.Ok)
@@ -504,19 +516,19 @@ func TestStorage(t *testing.T) {
 	require.NotNil(t, contractAcc, "failed to create contract %s", contractAddr)
 
 	// empty storage
-	tx11 := makeCallTx(t, "alice", contractAddr, getFunc, 0, _fee)
+	tx11 := makeCallTx(t, "alice", contractAddr, getFunc, new(big.Int).SetUint64(0),new(big.Int).SetUint64(_fee))
 	_, rec11 := signAndExecute(t, e.ErrNone, tx11, "alice")
 	assert.Equal(t, rec11.Output.Bytes(), []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0})
 
 	// Input is the function hash of `setVal()`: 100
 	retVal1, _ := hex.DecodeString("0000000000000000000000000000000000000000000000000000000000000064")
 	setData1 := addParams_3(setFunc, 100)
-	tx2 := makeCallTx(t, "alice", contractAddr, setData1, 0, _fee)
+	tx2 := makeCallTx(t, "alice", contractAddr, setData1, new(big.Int).SetUint64(0),new(big.Int).SetUint64(_fee))
 	_, rec2 := signAndExecute(t, e.ErrNone, tx2, "alice")
 	assert.Equal(t, rec2.Status, txs.Ok)
 
 	// Input is the function hash of `getVal()`
-	tx3 := makeCallTx(t, "alice", contractAddr, getFunc, 0, _fee)
+	tx3 := makeCallTx(t, "alice", contractAddr, getFunc, new(big.Int).SetUint64(0),new(big.Int).SetUint64(_fee))
 	_, rec3 := signAndExecute(t, e.ErrNone, tx3, "alice")
 	assert.Equal(t, rec3.Output.Bytes(), retVal1)
 
@@ -524,12 +536,12 @@ func TestStorage(t *testing.T) {
 	retVal2, _ := hex.DecodeString("ccb49089f0f3c8339bef0ff8af2351740aefb9701c0c490f1b5528d8173c5de4")
 	setData2 := setFunc
 	setData2 = append(setData2, retVal2...)
-	tx4 := makeCallTx(t, "alice", contractAddr, setData2, 0, _fee)
+	tx4 := makeCallTx(t, "alice", contractAddr, setData2, new(big.Int).SetUint64(0),new(big.Int).SetUint64(_fee))
 	_, rec4 := signAndExecute(t, e.ErrNone, tx4, "alice")
 	assert.Equal(t, rec4.Status, txs.Ok)
 
 	// Input is the function hash of `getVal()`
-	tx5 := makeCallTx(t, "alice", contractAddr, getFunc, 0, _fee)
+	tx5 := makeCallTx(t, "alice", contractAddr, getFunc, new(big.Int).SetUint64(0),new(big.Int).SetUint64(_fee))
 	_, rec5 := signAndExecute(t, e.ErrNone, tx5, "alice")
 	assert.Equal(t, rec5.Output.Bytes(), retVal2)
 }
@@ -565,7 +577,7 @@ func TestStorage2(t *testing.T) {
 
 	// A single input, having the permission, should succeed
 	seq1 := getAccountByName(t, "alice").Sequence()
-	tx1 := makeCallTx(t, "alice", crypto.Address{}, code, 0, _fee)
+	tx1 := makeCallTx(t, "alice", crypto.Address{}, code, new(big.Int).SetUint64(0),new(big.Int).SetUint64(_fee))
 
 	_, rec1 := signAndExecute(t, e.ErrNone, tx1, "alice")
 	assert.Equal(t, rec1.Status, txs.Ok)
@@ -577,7 +589,7 @@ func TestStorage2(t *testing.T) {
 	require.NotNil(t, contractAcc, "failed to create contract %s", contractAddr)
 
 	// Input is the function hash of `getVal()`
-	tx2 := makeCallTx(t, "alice", contractAddr, getValueFunc, 0, _fee)
+	tx2 := makeCallTx(t, "alice", contractAddr, getValueFunc,new(big.Int).SetUint64(0),new(big.Int).SetUint64(_fee))
 	_, rec2 := signAndExecute(t, e.ErrNone, tx2, "alice")
 	assert.Equal(t, rec2.Status, txs.Ok)
 	assert.Equal(t, rec2.Output.Bytes(), data)
@@ -585,12 +597,12 @@ func TestStorage2(t *testing.T) {
 	// Input is the function hash of `setVal()`: 100
 	retVal1, _ := hex.DecodeString("0000000000000000000000000000000000000000000000000000000000000064")
 	setData1 := addParams_3(setValueFunc, 100)
-	tx3 := makeCallTx(t, "alice", contractAddr, setData1, 0, _fee)
+	tx3 := makeCallTx(t, "alice", contractAddr, setData1, new(big.Int).SetUint64(0),new(big.Int).SetUint64(_fee))
 	_, rec3 := signAndExecute(t, e.ErrNone, tx3, "alice")
 	assert.Equal(t, rec3.Status, txs.Ok)
 
 	// Input is the function hash of `getVal()`
-	tx4 := makeCallTx(t, "alice", contractAddr, getValueFunc, 0, _fee)
+	tx4 := makeCallTx(t, "alice", contractAddr, getValueFunc,new(big.Int).SetUint64(0),new(big.Int).SetUint64(_fee))
 	_, rec4 := signAndExecute(t, e.ErrNone, tx4, "alice")
 	assert.Equal(t, rec4.Status, txs.Ok)
 	assert.Equal(t, rec4.Output.Bytes(), retVal1)
@@ -624,22 +636,22 @@ func TestSelfDestruct(t *testing.T) {
 	helloFunc, _ := hex.DecodeString("19ff1d21")
 
 	// A single input, having the permission, should succeed
-	tx1 := makeCallTx(t, "alice", crypto.Address{}, code, 0, _fee)
+	tx1 := makeCallTx(t, "alice", crypto.Address{}, code, new(big.Int).SetUint64(0),new(big.Int).SetUint64(_fee))
 	_, rec1 := signAndExecute(t, e.ErrNone, tx1, "alice")
 	assert.Equal(t, rec1.Status, txs.Ok)
 
 	// Should succeed, calling hello
-	tx2 := makeCallTx(t, "alice", *rec1.ContractAddress, helloFunc, 0, _fee)
+	tx2 := makeCallTx(t, "alice", *rec1.ContractAddress, helloFunc, new(big.Int).SetUint64(0),new(big.Int).SetUint64(_fee))
 	_, rec2 := signAndExecute(t, e.ErrNone, tx2, "alice")
 	assert.Equal(t, rec2.Status, txs.Ok)
 
 	// Should succeed, calling kill!
-	tx3 := makeCallTx(t, "alice", *rec1.ContractAddress, killFunc, 0, _fee)
+	tx3 := makeCallTx(t, "alice", *rec1.ContractAddress, killFunc,new(big.Int).SetUint64(0),new(big.Int).SetUint64(_fee))
 	_, rec3 := signAndExecute(t, e.ErrNone, tx3, "alice")
 	assert.Equal(t, rec3.Status, txs.Ok)
 
 	// Should fail, calling hello again
-	tx4 := makeCallTx(t, "alice", *rec1.ContractAddress, helloFunc, 0, _fee)
+	tx4 := makeCallTx(t, "alice", *rec1.ContractAddress, helloFunc,new(big.Int).SetUint64(0),new(big.Int).SetUint64(_fee))
 	_, rec4 := signAndExecute(t, e.ErrInvalidAddress, tx4, "alice")
 	assert.Equal(t, rec4.Status, txs.Failed)
 }

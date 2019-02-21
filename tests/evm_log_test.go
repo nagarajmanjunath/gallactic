@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"math/big"
 	"encoding/hex"
 	"testing"
 
@@ -35,7 +36,7 @@ func TestCallEventMethod1(t *testing.T) {
 	var _fee uint64 = 10
 	seq1 := getAccountByName(t, "alice").Sequence()
 	// alice deploy contract
-	tx1 := makeCallTx(t, "alice", crypto.Address{}, code, 0, _fee)
+	tx1 := makeCallTx(t, "alice", crypto.Address{}, code, new(big.Int).SetUint64(0),new(big.Int).SetUint64(_fee))
 	_, rec1 := signAndExecute(t, e.ErrNone, tx1, "alice")
 	contractAddr := *rec1.ContractAddress
 	assert.Equal(t, rec1.Status, txs.Ok)
@@ -47,7 +48,7 @@ func TestCallEventMethod1(t *testing.T) {
 	// Input is the function hash of `foo()`: 120
 	input2, _ := hex.DecodeString("4c970b2f0000000000000000000000000000000000000000000000000000000000000078")
 	// bob call contract
-	tx2 := makeCallTx(t, "bob", contractAddr, input2, 0, 100000)
+	tx2 := makeCallTx(t, "bob", contractAddr, input2,new(big.Int).SetUint64(0),new(big.Int).SetUint64(10000))
 	_, rec2 := signAndExecute(t, e.ErrNone, tx2, "bob")
 
 	bob := getAccountByName(t, "bob")

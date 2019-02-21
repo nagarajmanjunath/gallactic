@@ -57,11 +57,11 @@ func getBalanceByAddress(t *testing.T, addr crypto.Address) *big.Int {
 	return acc.Balance()
 }
 
-func checkBalance(t *testing.T, name string, amount uint64) {
+func checkBalance(t *testing.T, name string, amount *big.Int) {
 	checkBalanceByAddress(t, tAccounts[name].Address(), amount)
 }
 
-func checkBalanceByAddress(t *testing.T, addr crypto.Address, amount uint64) {
+func checkBalanceByAddress(t *testing.T, addr crypto.Address, amount *big.Int) {
 	acc := getAccount(t, addr)
 	require.NotNil(t, acc)
 	assert.Equal(t, acc.Balance(), amount)
@@ -151,8 +151,18 @@ func TestCreateAccountPermission(t *testing.T) {
 	addReceiver(t, tx6, "", 5)
 	signAndExecute(t, e.ErrNone, tx6, "alice", "bob")
 
-	// checkBalance(t, "alice", aliceBalance-(4*(5+_fee)))
-	// checkBalance(t, "bob", bobBalance-(3*(5+_fee)))
+	ab := new(big.Int).SetUint64(0)
+	ab = ab.Add(new(big.Int).SetUint64(_fee),new(big.Int).SetUint64(5))
+	ab = ab.Mul(ab,new(big.Int).SetUint64(4))
+	aliceBalance.Sub(aliceBalance,ab)
+
+	bb := new(big.Int).SetUint64(0)
+	bb = bb.Add(new(big.Int).SetUint64(_fee),new(big.Int).SetUint64(5))
+	bb = bb.Mul(bb,new(big.Int).SetUint64(3))
+	bobBalance.Sub(bobBalance,ab)
+
+	checkBalance(t, "alice", aliceBalance)
+	checkBalance(t, "bob", bobBalance)
 }
 
 func TestMultiSigs(t *testing.T) {

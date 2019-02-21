@@ -134,9 +134,9 @@ func TestTransactionMethods(t *testing.T) {
 
 	 fmt.Println("rest2",ret2)
 	 fmt.Println("rest3",ret3)
-
-	// require.Equal(t, ret2.Account.Balance(), bal_1.Sub(bal_1,1200)
-	// require.Equal(t, ret3.Account.Balance(), bal_2.Sub(bal_2,1000)
-
+	 bal_1.Sub(bal_1,new(big.Int).SetUint64(1200))
+	 bal_2.Sub(bal_2,new(big.Int).SetUint64(1000))
+	 require.Equal(t, ret2.Account.Balance(),bal_1)
+     require.Equal(t, ret3.Account.Balance(), bal_2)
 
 }
