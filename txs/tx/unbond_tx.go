@@ -19,8 +19,9 @@ type unbondData struct {
 
 func NewUnbondTx(from, to crypto.Address, amount *big.Int, sequence uint64, fee *big.Int) (*UnbondTx, error) {
 
-	var sum  *big.Int
+	sum := new(big.Int)
 	sum.Add(amount,fee)
+	
 	return &UnbondTx{
 		data: unbondData{
 			From: TxInput{

@@ -22,8 +22,8 @@ func EmptySendTx() (*SendTx, error) {
 
 func NewSendTx(from, to crypto.Address, seq uint64, amt, fee *big.Int) (*SendTx, error) {
 	tx := &SendTx{}
-	var sum *big.Int
-    sum.Add(amt,fee)
+	sum := new(big.Int)
+	sum.Add(amt,fee)
 	tx.AddSender(from, seq, sum)
 	tx.AddReceiver(to, amt)
 

@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"fmt"
 	"math/big"
 	"testing"
 
@@ -32,14 +33,18 @@ func makeBondTx(t *testing.T, from, to string, amount *big.Int, fee *big.Int) *t
 func TestBondTxFails(t *testing.T) {
 	setPermissions(t, "alice", permission.Bond)
 	setPermissions(t, "bob", permission.Send)
+	amt := new(big.Int).SetUint64(9999)
+	fee :=new(big.Int).SetUint64(_fee)
 
-	tx1 := makeBondTx(t, "alice", "",new(big.Int).SetUint64(9999) ,new(big.Int).SetUint64(_fee))
+	tx1 := makeBondTx(t, "alice", "", amt,fee)
+	fmt.Println("tx1",tx1.Amount())
+	fmt.Println("tx1",tx1)
 	signAndExecute(t, e.ErrNone, tx1, "alice")
 
-	tx2 := makeBondTx(t, "alice", "val_1",new(big.Int).SetUint64(9999) ,new(big.Int).SetUint64(_fee))
+	tx2 := makeBondTx(t, "alice", "val_1",amt ,fee)
 	signAndExecute(t, e.ErrNone, tx2, "alice")
 
-	tx3 := makeBondTx(t, "bob", "", new(big.Int).SetUint64(9999) ,new(big.Int).SetUint64(_fee))
+	tx3 := makeBondTx(t, "bob", "", amt ,fee)
 	signAndExecute(t, e.ErrPermissionDenied, tx3, "bob")
 }
 

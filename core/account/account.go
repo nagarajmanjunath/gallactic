@@ -19,7 +19,7 @@ type Account struct {
 type accountData struct {
 	Address     crypto.Address  `json:"address"`
 	Sequence    uint64          `json:"sequence"`
-	Balance     *big.Int          `json:"balance"`
+	Balance     *big.Int        `json:"balance"`
 	Code        binary.HexBytes `json:"code"`
 	Permissions Permissions     `json:"permissions"`
 }
@@ -37,7 +37,7 @@ func NewAccount(addr crypto.Address) (*Account, error) {
 	return &Account{
 		data: accountData{
 			Address: addr,
-			Balance: new(big.Int),
+		    Balance: new(big.Int),
 		},
 	}, nil
 }
@@ -71,12 +71,11 @@ func AccountFromBytes(bs []byte) (*Account, error) {
 	if err := acc.Decode(bs); err != nil {
 		return nil, err
 	}
-
 	return &acc, nil
 }
 
 func (acc Account) Address() crypto.Address  { return acc.data.Address }
-func (acc Account) Balance() *big.Int {return acc.data.Balance}
+func (acc Account) Balance() *big.Int		 {return acc.data.Balance}
 func (acc Account) Sequence() uint64         { return acc.data.Sequence }
 func (acc Account) Code() []byte             { return acc.data.Code }
 func (acc Account) Permissions() Permissions { return acc.data.Permissions }

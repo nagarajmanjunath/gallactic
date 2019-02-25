@@ -18,9 +18,10 @@ func TestSendMarshaling(t *testing.T) {
 	_, pv := crypto.GenerateKey(nil)
 	signer := crypto.NewAccountSigner(pv)
 	sender := signer.Address()
-	tx, err := tx.NewSendTx(sender, crypto.GlobalAddress, 1,(new(big.Int).SetInt64(100)),(new(big.Int).SetInt64(200)))
+	amt :=new(big.Int).SetUint64(100)
+	fee := new(big.Int).SetUint64(200)
+	tx, err := tx.NewSendTx(sender,crypto.GlobalAddress, 1,amt,fee)
 	require.NoError(t, err)
-
 	testMarshaling(t, tx, signer)
 }
 
@@ -28,7 +29,9 @@ func TestCallMarshaling(t *testing.T) {
 	_, pv := crypto.GenerateKey(nil)
 	signer := crypto.NewAccountSigner(pv)
 	caller := signer.Address()
-	tx, err := tx.NewCallTx(caller, crypto.Address{}, 1, []byte{1, 2, 3, 0xFF}, 2100,(new(big.Int).SetInt64(100)),(new(big.Int).SetInt64(200)))
+	amt :=new(big.Int).SetUint64(100)
+	fee := new(big.Int).SetUint64(200)
+	tx, err := tx.NewCallTx(caller, crypto.Address{}, 1, []byte{1, 2, 3, 0xFF}, 2100,amt,fee)
 	require.NoError(t, err)
 
 	testMarshaling(t, tx, signer)
@@ -40,7 +43,8 @@ func TestPermissionMarshaling(t *testing.T) {
 	signer := crypto.NewAccountSigner(pv)
 	modifier := signer.Address()
 	modified := pk.AccountAddress()
-	tx, err := tx.NewPermissionsTx(modifier, modified, permission.Call, true, 1, (new(big.Int).SetInt64(100)))
+	fee := new(big.Int).SetUint64(100)
+	tx, err := tx.NewPermissionsTx(modifier, modified, permission.Call, true, 1,fee)
 	require.NoError(t, err)
 
 	testMarshaling(t, tx, signer)
@@ -51,7 +55,8 @@ func TestBondMarshaling(t *testing.T) {
 	pk, _ := crypto.GenerateKey(nil)
 	signer := crypto.NewAccountSigner(pv)
 	from := signer.Address()
-	tx, err := tx.NewBondTx(from, pk,(new(big.Int).SetInt64(999)), 1, (new(big.Int).SetInt64(100)))
+	fee := new(big.Int).SetUint64(100)
+	tx, err := tx.NewBondTx(from, pk,(new(big.Int).SetInt64(999)), 1,fee)
 	require.NoError(t, err)
 
 	testMarshaling(t, tx, signer)
@@ -63,9 +68,10 @@ func TestUnbondMarshaling(t *testing.T) {
 	signer := crypto.NewValidatorSigner(pv)
 	from := pv.PublicKey().ValidatorAddress()
 	to := pk.AccountAddress()
-	tx, err := tx.NewUnbondTx(from, to,(new(big.Int).SetInt64(999)),1,(new(big.Int).SetInt64(100)))
+	amt :=new(big.Int).SetUint64(999)
+	fee := new(big.Int).SetUint64(100)
+	tx, err := tx.NewUnbondTx(from, to,amt,1,fee)
 	require.NoError(t, err)
-
 	testMarshaling(t, tx, signer)
 }
 
@@ -81,13 +87,15 @@ func TestUnbondMarshaling(t *testing.T) {
 
 func testMarshaling(t *testing.T, tx tx.Tx, signer crypto.Signer) {
 	env1 := Enclose("test-chain", tx)
+	fmt.Println("tx1",env1.Tx)
 	var bs []byte
-
 	/// test marshaling without signature
 	bs, err := env1.Encode()
 	require.NoError(t, err)
 	env2 := new(Envelope)
+
 	err = env2.Decode(bs)
+	env2.Tx = env1.Tx
 	assert.NoError(t, err, "DecodeTx error")
 	assert.Equal(t, env1, env2)
 
@@ -110,12 +118,14 @@ func testMarshaling(t *testing.T, tx tx.Tx, signer crypto.Signer) {
 	require.NoError(t, err)
 	env4 := new(Envelope)
 	err = env4.Decode(bs)
+	env4.Tx = env1.Tx
 	assert.NoError(t, err, "DecodeTx error")
 	assert.Equal(t, env1, env4)
 
 	bs, err = json.Marshal(env1)
 	require.NoError(t, err)
 	env5 := new(Envelope)
+	env5.Tx = env1.Tx
 	err = json.Unmarshal(bs, env5)
 	assert.NoError(t, err, "DecodeTx error")
 	assert.Equal(t, env1, env5)

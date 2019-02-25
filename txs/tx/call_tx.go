@@ -3,7 +3,6 @@ package tx
 import (
 	"math/big"
 	"encoding/json"
-
 	"github.com/gallactic/gallactic/common/binary"
 	"github.com/gallactic/gallactic/crypto"
 	"github.com/gallactic/gallactic/errors"
@@ -20,9 +19,9 @@ type callData struct {
 	Data     binary.HexBytes `json:"data,omitempty"`
 }
 
-func NewCallTx(caller, callee crypto.Address, sequence uint64,data []byte, gasLimit uint64, amount, fee *big.Int) (*CallTx, error) {
+func NewCallTx(caller, callee crypto.Address, sequence uint64,data []byte, gasLimit uint64, amount *big.Int, fee *big.Int) (*CallTx, error) {
 
-	var sum  *big.Int
+	sum := new(big.Int)
 	sum.Add(amount,fee)
 	return &CallTx{
 		data: callData{
@@ -33,7 +32,7 @@ func NewCallTx(caller, callee crypto.Address, sequence uint64,data []byte, gasLi
 			},
 			Callee: TxOutput{
 				Address: callee,
-				Amount:  sum,
+				Amount:  amount,
 			},
 			GasLimit: gasLimit,
 			Data:     data,

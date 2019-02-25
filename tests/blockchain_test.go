@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"fmt"
 	"math/big"
 	"runtime/debug"
 	"testing"
@@ -42,6 +43,9 @@ func commit(t *testing.T) {
 }
 
 func signAndExecute(t *testing.T, errorCode int, tx tx.Tx, names ...string) (*txs.Envelope, *txs.Receipt) {
+
+	fmt.Println("signExcute",tx)
+
 	signers := make([]crypto.Signer, len(names))
 	for i, name := range names {
 		signers[i] = tSigners[name]
@@ -49,13 +53,15 @@ func signAndExecute(t *testing.T, errorCode int, tx tx.Tx, names ...string) (*tx
 
 	ins := tx.Signers()
 	seq := make([]uint64, len(ins))
-	totalBalance1 :=new(big.Int).SetUint64(0)
+	totalBalance1 := new(big.Int).SetUint64(0)
 	totalBalance2 := new(big.Int).SetUint64(0)
 
 	for i, in := range ins {
 		if in.Address.IsAccountAddress() {
 			acc := getAccount(t, in.Address)
+			fmt.Println("acc",acc)
 			seq[i] = acc.Sequence()
+			fmt.Println("Balance",acc.Balance())
 			totalBalance1.Add(acc.Balance(),totalBalance1)
 			totalBalance2.Add(acc.Balance(),totalBalance2)
 

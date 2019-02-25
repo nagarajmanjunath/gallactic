@@ -1,6 +1,7 @@
 package tx
 
 import (
+	"fmt"
 	"math/big"
 	"encoding/json"
 
@@ -20,8 +21,9 @@ type bondData struct {
 
 
 func NewBondTx(from crypto.Address, to crypto.PublicKey, amount *big.Int, sequence uint64, fee *big.Int) (*BondTx, error) {
-	var sum  *big.Int
+	sum := new(big.Int)
 	sum.Add(amount,fee)
+	fmt.Println(sum)
 	return &BondTx{
 		data: bondData{
 			From: TxInput{
@@ -53,8 +55,9 @@ func (tx *BondTx) Amount() *big.Int {
 
 func (tx *BondTx) Fee() *big.Int {
 
-	var fee *big.Int
-	fee =fee.Sub(tx.data.From.Amount,tx.data.To.Amount)
+	var fee = new(big.Int)
+	fee = fee.Sub(tx.data.From.Amount,tx.data.To.Amount)
+	fmt.Println("fee",fee)
 	return fee
 }
 

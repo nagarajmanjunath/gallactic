@@ -104,6 +104,7 @@ func (gen *Genesis) Accounts() []*account.Account {
 
 	/// add global account
 	acc := gen.GlobalAccount()
+	fmt.Println("acc",acc)
 	accs = append(accs, acc)
 
 	/// add genesis accounts
